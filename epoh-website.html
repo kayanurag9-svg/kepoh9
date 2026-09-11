@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Epoh — A new epoch of chai and coffee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,500;0,9..144,600;1,9..144,440;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --charcoal:#15100c;
+    --charcoal-2:#1d1611;
+    --charcoal-3:#241b14;
+    --cream:#f6ecdb;
+    --cream-dim:#c8b99f;
+    --clay:#c1824c;
+    --clay-deep:#8a5a30;
+    --moss:#71916d;
+    --moss-deep:#3f5240;
+    --gold:#e3a83f;
+    --umber:#4a2f21;
+    --rose:#c96a58;
+    --font-display:'Fraunces', serif;
+    --font-body:'Inter', sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--charcoal);
+    color:var(--cream);
+    font-family:var(--font-body);
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  a{color:inherit; text-decoration:none;}
+  h1,h2,h3{font-family:var(--font-display); font-weight:500; letter-spacing:-0.01em;}
+  button{font-family:var(--font-body); cursor:pointer; border:none; background:none; color:inherit;}
+  ::selection{background:var(--gold); color:var(--charcoal);}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:3px;}
+
+  /* film grain, sits over everything, very low opacity */
+  .grain{
+    position:fixed; inset:-100px; z-index:200; pointer-events:none;
+    opacity:0.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* scroll progress */
+  .progress-track{position:fixed; top:0; left:0; right:0; height:2px; z-index:60; background:rgba(246,236,219,0.06);}
+  .progress-fill{height:100%; width:0%; background:linear-gradient(90deg, var(--moss), var(--gold)); transition:width .1s linear;}
+
+  /* ---------- NAV ---------- */
+  .nav{
+    position:fixed; top:2px; left:0; right:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:24px clamp(20px,5vw,56px);
+    transition:background .4s ease, backdrop-filter .4s ease, padding .3s ease;
+  }
+  .nav.scrolled{
+    background:rgba(21,16,12,0.7); backdrop-filter:blur(16px);
+    padding:15px clamp(20px,5vw,56px); border-bottom:1px solid rgba(246,236,219,0.07);
+  }
+  .nav .logo{font-family:var(--font-display); font-size:1.35rem; font-weight:600; letter-spacing:0.01em;}
+  .nav ul{display:flex; gap:clamp(18px,3vw,40px); list-style:none;}
+  .nav ul a{font-size:0.9rem; color:var(--cream-dim); transition:color .25s; position:relative;}
+  .nav ul a:hover{color:var(--gold);}
+  .nav .tray-btn{
+    display:flex; align-items:center; gap:8px; font-size:0.84rem; color:var(--cream);
+    border:1px solid rgba(246,236,219,0.22); border-radius:100px; padding:9px 17px;
+    transition:border-color .25s, background .25s;
+  }
+  .nav .tray-btn:hover{border-color:var(--gold); background:rgba(227,168,63,0.08);}
+  .nav .tray-count{background:var(--gold); color:var(--charcoal); font-weight:600; font-size:0.7rem; border-radius:100px; padding:1px 7px;}
+  .nav-toggle{display:none; font-size:1.5rem; background:none; color:var(--cream);}
+
+  @media (max-width:760px){
+    .nav ul{
+      position:fixed; top:0; right:0; height:100vh; width:min(78vw,320px);
+      background:var(--charcoal-2); flex-direction:column; justify-content:center;
+      padding:0 40px; gap:28px; transform:translateX(100%); transition:transform .35s ease; z-index:60;
+    }
+    .nav ul.open{transform:translateX(0);}
+    .nav-toggle{display:block;}
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative; height:195vh;}
+  #hero-canvas{position:fixed; inset:0; z-index:0;}
+  .hero-vignette{position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(ellipse 70% 60% at 22% 88%, rgba(21,16,12,0.85) 0%, rgba(21,16,12,0.15) 55%, transparent 75%),
+               linear-gradient(180deg, rgba(21,16,12,0.35) 0%, transparent 24%, transparent 70%, rgba(21,16,12,0.55) 100%);
+  }
+  .hero-content{
+    position:sticky; top:0; height:100vh; z-index:3;
+    display:flex; flex-direction:column; justify-content:flex-end;
+    padding:0 clamp(20px,6vw,64px) clamp(70px,10vh,116px);
+    pointer-events:none;
+  }
+  .hero-content > *{pointer-events:auto;}
+  .hero-eyebrow{font-size:0.86rem; color:var(--moss); margin-bottom:20px; letter-spacing:0.02em;}
+  .hero h1{font-size:clamp(2.7rem,6.8vw,5.8rem); line-height:1.02; max-width:14ch; color:var(--cream); text-shadow:0 6px 40px rgba(0,0,0,0.4);}
+  .hero p.sub{margin-top:24px; font-size:clamp(1.05rem,1.7vw,1.3rem); color:var(--cream-dim); max-width:36ch; font-family:var(--font-display); font-style:italic; font-weight:440;}
+  .hero-ctas{display:flex; gap:16px; margin-top:40px; flex-wrap:wrap;}
+  .btn{display:inline-flex; align-items:center; gap:10px; padding:15px 28px; border-radius:100px; font-size:0.95rem; font-weight:500; transition:transform .25s ease, box-shadow .3s ease, background .25s ease, color .25s ease, border-color .25s ease;}
+  .btn-primary{background:var(--gold); color:var(--charcoal); box-shadow:0 8px 26px -8px rgba(227,168,63,0.55);}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 12px 32px -6px rgba(227,168,63,0.7);}
+  .btn-ghost{border:1px solid rgba(246,236,219,0.32); color:var(--cream); backdrop-filter:blur(6px);}
+  .btn-ghost:hover{border-color:var(--cream); transform:translateY(-2px); background:rgba(246,236,219,0.06);}
+  .hero-scrollcue{position:absolute; left:clamp(20px,6vw,64px); bottom:28px; width:1px; height:70px; background:rgba(246,236,219,0.18); overflow:hidden; z-index:3;}
+  .hero-scrollcue::after{content:''; position:absolute; top:0; left:0; width:100%; height:38%; background:var(--gold); animation:pour 2.4s ease-in-out infinite;}
+  @keyframes pour{0%{top:-38%;} 100%{top:100%;}}
+
+  /* ---------- SECTION SHELL ---------- */
+  section{position:relative; z-index:2;}
+  .section-inner{max-width:1180px; margin:0 auto; padding:0 clamp(20px,6vw,56px);}
+  .section-head{max-width:580px; margin-bottom:52px;}
+  .section-tag{color:var(--gold); font-size:0.85rem; margin-bottom:14px;}
+  .section-head h2{font-size:clamp(2rem,3.8vw,3rem); color:var(--cream);}
+  .section-head p{color:var(--cream-dim); margin-top:16px; font-size:1.04rem;}
+  .divider-blend{height:120px; background:linear-gradient(180deg, var(--from) 0%, var(--to) 100%); margin-top:-1px;}
+
+  /* ---------- MENU ---------- */
+  .menu-section{background:radial-gradient(ellipse 90% 60% at 50% 0%, #241a13 0%, var(--charcoal-2) 55%, var(--charcoal) 100%); padding:130px 0 110px;}
+  .menu-toolbar{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap;}
+  .view-toggle{display:flex; border:1px solid rgba(246,236,219,0.18); border-radius:100px; overflow:hidden;}
+  .view-toggle button{padding:10px 22px; font-size:0.88rem; color:var(--cream-dim); transition:background .25s, color .25s;}
+  .view-toggle button.active{background:var(--gold); color:var(--charcoal);}
+  .legend{display:flex; gap:22px; margin-top:26px; flex-wrap:wrap;}
+  .legend span{display:inline-flex; align-items:center; gap:8px; font-size:0.82rem; color:var(--cream-dim);}
+  .legend i{width:9px; height:9px; border-radius:50%; display:inline-block; box-shadow:0 0 10px currentColor;}
+  .legend .tea i{background:var(--moss); color:var(--moss);}
+  .legend .coffee i{background:var(--gold); color:var(--gold);}
+
+  .galaxy-wrap{position:relative; height:80vh; min-height:480px; margin-top:38px; border-radius:24px; overflow:hidden;
+    background:radial-gradient(circle at 50% 62%, rgba(120,90,46,0.22), transparent 68%);
+    border:1px solid rgba(246,236,219,0.06);
+  }
+  #galaxy-canvas{position:absolute; inset:0; cursor:grab;}
+  #galaxy-canvas.dragging{cursor:grabbing;}
+  .galaxy-hint{position:absolute; bottom:18px; left:50%; transform:translateX(-50%); font-size:0.78rem; color:var(--cream-dim);
+    background:rgba(21,16,12,0.6); padding:7px 16px; border-radius:100px; backdrop-filter:blur(8px); pointer-events:none;
+    border:1px solid rgba(246,236,219,0.08);
+  }
+  .galaxy-tooltip{
+    position:absolute; z-index:5; pointer-events:none; max-width:230px;
+    background:rgba(29,22,17,0.92); backdrop-filter:blur(10px);
+    border-left:2px solid var(--gold); border-radius:4px 14px 14px 4px; padding:15px 17px;
+    transform:translate(-50%,-124%); opacity:0; transition:opacity .15s ease;
+    box-shadow:0 14px 34px -10px rgba(0,0,0,0.5);
+  }
+  .galaxy-tooltip.tea{border-left-color:var(--moss);}
+  .galaxy-tooltip.show{opacity:1;}
+  .galaxy-tooltip h4{font-size:0.96rem; color:var(--cream); margin-bottom:5px;}
+  .galaxy-tooltip p{font-size:0.8rem; color:var(--cream-dim);}
+  .galaxy-tooltip .price{font-size:0.78rem; color:var(--gold); margin-top:7px;}
+
+  .menu-list{display:grid; grid-template-columns:repeat(2,1fr); gap:44px; margin-top:38px;}
+  .menu-list h3{font-size:1.12rem; color:var(--gold); margin-bottom:18px; font-family:var(--font-body); font-weight:600;}
+  .drink-card{display:flex; justify-content:space-between; gap:14px; padding:17px 4px; border-bottom:1px solid rgba(246,236,219,0.08); text-align:left; width:100%; transition:padding-left .2s ease, background .2s ease;}
+  .drink-card:hover{padding-left:10px; background:rgba(246,236,219,0.03);}
+  .drink-card:hover .drink-name{color:var(--gold);}
+  .drink-name{font-family:var(--font-display); font-size:1.06rem; color:var(--cream); transition:color .2s;}
+  .drink-desc{color:var(--cream-dim); font-size:0.86rem; margin-top:4px; max-width:34ch; display:block;}
+  .drink-price{color:var(--cream-dim); font-size:0.85rem; white-space:nowrap; padding-top:2px;}
+  .badge-pill{display:inline-block; font-size:0.68rem; padding:2px 10px; border-radius:100px; margin-top:7px; border:1px solid currentColor;}
+  @media (max-width:760px){ .menu-list{grid-template-columns:1fr; gap:8px;} }
+
+  /* ---------- DRINK MODAL ---------- */
+  .modal-scrim{position:fixed; inset:0; background:rgba(10,7,5,0.82); backdrop-filter:blur(6px); z-index:100; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .3s ease; padding:20px;}
+  .modal-scrim.open{opacity:1; pointer-events:auto;}
+  .modal-panel{background:var(--charcoal-2); border-radius:24px; max-width:800px; width:100%; display:grid; grid-template-columns:1fr 1fr; overflow:hidden; transform:translateY(18px) scale(0.97); transition:transform .35s ease; max-height:86vh; box-shadow:0 40px 90px -20px rgba(0,0,0,0.6);}
+  .modal-scrim.open .modal-panel{transform:translateY(0) scale(1);}
+  .modal-visual{position:relative; min-height:280px; overflow:hidden; display:flex; align-items:center; justify-content:center;}
+  .modal-visual .glow{width:240px; height:240px; border-radius:50%; filter:blur(6px); animation:swirl 7s ease-in-out infinite;}
+  .modal-visual .ring{position:absolute; width:180px; height:180px; border:1px solid rgba(246,236,219,0.15); border-radius:50%; animation:spin 16s linear infinite;}
+  @keyframes swirl{0%,100%{transform:scale(1) rotate(0deg);} 50%{transform:scale(1.1) rotate(10deg);}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .modal-body{padding:36px 34px; display:flex; flex-direction:column; overflow-y:auto;}
+  .modal-body h3{font-size:1.55rem; color:var(--cream); margin-bottom:6px;}
+  .modal-body .price{color:var(--gold); font-size:0.95rem; margin-bottom:18px;}
+  .modal-body p.desc{color:var(--cream-dim); margin-bottom:22px;}
+  .modal-close{position:absolute; top:16px; right:16px; z-index:2; font-size:1.4rem; color:var(--cream); background:rgba(0,0,0,0.35); width:36px; height:36px; border-radius:50%; transition:background .2s;}
+  .modal-close:hover{background:rgba(0,0,0,0.55);}
+  .modal-ctas{display:flex; gap:12px; margin-top:auto; flex-wrap:wrap;}
+  .modal-ctas .btn{padding:12px 20px; font-size:0.88rem;}
+  @media (max-width:640px){ .modal-panel{grid-template-columns:1fr;} .modal-visual{min-height:180px;} }
+
+  /* ---------- STORY ---------- */
+  .story-section{background:var(--charcoal); padding:130px 0 110px;}
+  .story-timeline{position:relative; margin-top:20px;}
+  .story-timeline::before{content:''; position:absolute; left:43px; top:10px; bottom:10px; width:1px; background:linear-gradient(180deg, transparent, rgba(246,236,219,0.18) 10%, rgba(246,236,219,0.18) 90%, transparent);}
+  @media (max-width:640px){ .story-timeline::before{left:27px;} }
+  .story-station{display:grid; grid-template-columns:88px 1fr; gap:32px; align-items:flex-start; padding:34px 0; opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
+  .story-station.in-view{opacity:1; transform:translateY(0);}
+  @media (prefers-reduced-motion: reduce){ .story-station{transition:opacity .01s;} }
+  .story-icon{position:relative; width:88px; height:88px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.9rem; flex-shrink:0; z-index:1; border:1px solid rgba(246,236,219,0.12);}
+  .story-num{position:absolute; top:-8px; right:-8px; background:var(--charcoal); border:1px solid rgba(246,236,219,0.2); color:var(--cream-dim); font-size:0.68rem; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-body);}
+  .story-text h3{font-size:1.28rem; color:var(--cream); margin-bottom:9px;}
+  .story-text p{color:var(--cream-dim); max-width:58ch;}
+  @media (max-width:640px){ .story-station{grid-template-columns:56px 1fr; gap:18px;} .story-icon{width:56px; height:56px; font-size:1.3rem;} }
+
+  /* ---------- VISIT ---------- */
+  .visit-section{background:linear-gradient(180deg, var(--charcoal) 0%, var(--charcoal-2) 100%); padding:130px 0;}
+  .visit-grid{display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:start;}
+  .visit-detail{margin-bottom:28px;}
+  .visit-detail h4{font-size:0.85rem; color:var(--gold); margin-bottom:7px;}
+  .visit-detail p{color:var(--cream-dim);}
+  .visit-map{position:relative; height:360px; border-radius:22px; overflow:hidden; background:radial-gradient(circle at 30% 25%, #3f3020, #14100c 75%); border:1px solid rgba(246,236,219,0.06);}
+  .map-line{position:absolute; inset:0;}
+  .map-path{stroke:var(--gold); stroke-width:2; fill:none; stroke-dasharray:340; stroke-dashoffset:340; transition:stroke-dashoffset 1.5s ease;}
+  .visit-map.in-view .map-path{stroke-dashoffset:0;}
+  .map-pin{position:absolute; left:68%; top:36%; font-size:2.1rem; animation:bob 2.6s ease-in-out infinite; filter:drop-shadow(0 8px 14px rgba(0,0,0,0.5));}
+  @media (prefers-reduced-motion: reduce){ .map-pin{animation:none;} }
+  @keyframes bob{0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);}}
+  .socials{display:flex; gap:14px; margin-top:30px;}
+  .social-icon{width:44px; height:44px; border-radius:50%; border:1px solid rgba(246,236,219,0.22); display:flex; align-items:center; justify-content:center; transition:border-color .3s ease, transform .25s ease; background-size:220% 220%; background-position:0% 0%;}
+  .social-icon svg{width:18px; height:18px; fill:var(--cream); transition:fill .3s;}
+  .social-icon:hover{background-image:linear-gradient(135deg,var(--clay),var(--gold)); background-position:100% 100%; border-color:transparent; transform:translateY(-3px);}
+
+  @media (max-width:760px){ .visit-grid{grid-template-columns:1fr; gap:44px;} }
+
+  /* ---------- ORDER ---------- */
+  .order-section{background:var(--charcoal-2); padding:130px 0 150px;}
+  .order-grid{display:grid; grid-template-columns:1.2fr 1fr; gap:56px;}
+  .order-form-card{background:var(--charcoal); border:1px solid rgba(246,236,219,0.08); border-radius:20px; padding:34px;}
+  .form-group{margin-bottom:18px;}
+  .form-group label{display:block; font-size:0.82rem; color:var(--cream-dim); margin-bottom:7px;}
+  .form-group input, .form-group textarea{width:100%; background:var(--charcoal-3); border:1px solid rgba(246,236,219,0.14); border-radius:10px; padding:12px 14px; color:var(--cream); font-family:var(--font-body); font-size:0.95rem; transition:border-color .2s;}
+  .form-group input:focus, .form-group textarea:focus{border-color:var(--gold);}
+  .form-note{font-size:0.82rem; color:var(--cream-dim); margin-top:14px;}
+  .confirm-msg{display:none; margin-top:16px; color:var(--moss); font-size:0.9rem;}
+  .confirm-msg.show{display:block;}
+  .tray-panel{background:var(--charcoal); border:1px solid rgba(246,236,219,0.08); border-radius:20px; padding:28px;}
+  .tray-panel h3{font-size:1.12rem; margin-bottom:16px;}
+  .tray-empty{color:var(--cream-dim); font-size:0.88rem;}
+  .tray-item{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(246,236,219,0.08); font-size:0.9rem;}
+  .tray-item button{color:var(--rose); font-size:0.8rem;}
+  .loyalty{margin-top:28px; padding-top:24px; border-top:1px solid rgba(246,236,219,0.1);}
+  .loyalty h4{font-size:0.96rem; margin-bottom:8px;}
+  .loyalty-form{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .loyalty-form input{flex:1; min-width:140px; background:var(--charcoal-3); border:1px solid rgba(246,236,219,0.14); border-radius:100px; padding:11px 16px; color:var(--cream); font-size:0.88rem;}
+  .loyalty-form button{background:var(--gold); color:var(--charcoal); border-radius:100px; padding:11px 18px; font-size:0.85rem; font-weight:500;}
+  @media (max-width:760px){ .order-grid{grid-template-columns:1fr; gap:36px;} }
+
+  /* ---------- FOOTER ---------- */
+  footer{background:var(--charcoal-2); padding:50px clamp(20px,6vw,56px); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; border-top:1px solid rgba(246,236,219,0.08); position:relative;}
+  footer::before{content:''; position:absolute; top:-1px; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, var(--gold), transparent);}
+  footer .logo{font-family:var(--font-display); font-size:1.15rem;}
+  footer p{font-size:0.8rem; color:var(--cream-dim);}
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+
+<nav class="nav" id="nav">
+  <div class="logo">Epoh</div>
+  <ul id="nav-links">
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#story">Story</a></li>
+    <li><a href="#visit">Visit</a></li>
+    <li><a href="#order">Order</a></li>
+  </ul>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <button class="tray-btn" id="tray-btn-nav">Pre-order <span class="tray-count" id="tray-count">0</span></button>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">☰</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-vignette"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Nine teas. Nine coffees. One new epoch.</p>
+    <h1>Chai that hugs you.<br>Coffee that wakes you up.</h1>
+    <p class="sub">Where kadak chai meets cold brew — reimagined for how you actually live.</p>
+    <div class="hero-ctas">
+      <a href="#menu" class="btn btn-primary">Explore the Menu</a>
+      <a href="#visit" class="btn btn-ghost">Visit Epoh</a>
+    </div>
+  </div>
+  <div class="hero-scrollcue"></div>
+</header>
+
+<section class="menu-section" id="menu">
+  <div class="section-inner">
+    <div class="section-head">
+      <p class="section-tag">The Menu Galaxy</p>
+      <h2>Eighteen drinks, two constellations.</h2>
+      <p>Drag to explore. Hover an orb to preview it. Click to see the full pour.</p>
+    </div>
+    <div class="menu-toolbar">
+      <div class="legend">
+        <span class="tea"><i></i> Tea Constellation</span>
+        <span class="coffee"><i></i> Coffee Constellation</span>
+      </div>
+      <div class="view-toggle">
+        <button id="view-galaxy" class="active">Galaxy</button>
+        <button id="view-list">List</button>
+      </div>
+    </div>
+
+    <div class="galaxy-wrap" id="galaxy-wrap">
+      <canvas id="galaxy-canvas"></canvas>
+      <div class="galaxy-tooltip" id="galaxy-tooltip"></div>
+      <div class="galaxy-hint">Drag to rotate · Click an orb for details</div>
+    </div>
+
+    <div class="menu-list" id="menu-list" style="display:none;">
+      <div>
+        <h3>Teas</h3>
+        <div id="list-tea"></div>
+      </div>
+      <div>
+        <h3>Coffees</h3>
+        <div id="list-coffee"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="story-section" id="story">
+  <div class="section-inner">
+    <div class="section-head">
+      <p class="section-tag">Our Story</p>
+      <h2>How Epoh was brewed.</h2>
+      <p>Tradition and modernity, steeped together — five moments in.</p>
+    </div>
+    <div class="story-timeline" id="story-stations"></div>
+  </div>
+</section>
+
+<section class="visit-section" id="visit">
+  <div class="section-inner">
+    <div class="section-head">
+      <p class="section-tag">Visit Epoh</p>
+      <h2>Come sit with us.</h2>
+    </div>
+    <div class="visit-grid">
+      <div>
+        <div class="visit-detail"><h4>Address</h4><p>14 Church Street, Bengaluru, Karnataka 560001</p></div>
+        <div class="visit-detail"><h4>Hours</h4><p>Mon–Fri, 8am – 10pm · Sat–Sun, 9am – 11pm</p></div>
+        <div class="visit-detail"><h4>Contact</h4><p>hello@epoh.in · +91 98765 43210</p></div>
+        <div class="socials">
+          <a class="social-icon" href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2c2.7 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.22.6 1.77 1.15.55.55.89 1.11 1.15 1.77.25.64.42 1.37.47 2.43.05 1.06.06 1.42.06 4.12s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.77 4.9 4.9 0 0 1-1.77 1.15c-.64.25-1.37.42-2.43.47-1.06.05-1.42.06-4.12.06s-3.06-.01-4.12-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.77-1.15 4.9 4.9 0 0 1-1.15-1.77c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.7 2 12s.01-3.06.06-4.12c.05-1.06.22-1.79.47-2.43.26-.66.6-1.22 1.15-1.77A4.9 4.9 0 0 1 5.45 2.53c.64-.25 1.37-.42 2.43-.47C8.94 2.01 9.3 2 12 2zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.4-8.9a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z"/></svg></a>
+          <a class="social-icon" href="#" aria-label="X"><svg viewBox="0 0 24 24"><path d="M18.9 2h3.3l-7.2 8.2L23.5 22h-6.8l-5.3-6.9L5 22H1.7l7.7-8.8L1 2h6.9l4.8 6.3L18.9 2zm-1.2 18h1.8L7.4 4H5.5l12.2 16z"/></svg></a>
+          <a class="social-icon" href="#" aria-label="Maps"><svg viewBox="0 0 24 24"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.6 6.6 11.4 7.3 12a1 1 0 0 0 1.4 0C13.4 21.4 20 15.6 20 10c0-4.4-3.6-8-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg></a>
+        </div>
+      </div>
+      <div class="visit-map" id="visit-map">
+        <svg class="map-line" viewBox="0 0 300 340">
+          <path class="map-path" d="M0 300 C 80 260, 120 220, 170 170 S 220 100, 205 128" />
+        </svg>
+        <div class="map-pin">📍</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="order-section" id="order">
+  <div class="section-inner">
+    <div class="section-head">
+      <p class="section-tag">Order &amp; Loyalty</p>
+      <h2>Pre-order, or join the Epoch.</h2>
+    </div>
+    <div class="order-grid">
+      <form id="order-form" class="order-form-card">
+        <div class="form-group"><label for="name">Name</label><input id="name" type="text" required /></div>
+        <div class="form-group"><label for="phone">Phone</label><input id="phone" type="tel" required /></div>
+        <div class="form-group"><label for="pickup">Pickup time</label><input id="pickup" type="time" /></div>
+        <div class="form-group"><label for="notes">Notes</label><textarea id="notes" rows="3" placeholder="Less sugar, extra ginger, etc."></textarea></div>
+        <button type="submit" class="btn btn-primary">Send Pre-order</button>
+        <p class="form-note">We'll confirm by SMS. This form doesn't place a live order yet — it's a preview of the flow.</p>
+        <p class="confirm-msg" id="confirm-msg">Pre-order noted — we'd text you a confirmation here.</p>
+      </form>
+
+      <div>
+        <div class="tray-panel">
+          <h3>Your tray</h3>
+          <div id="tray-list"><p class="tray-empty">Nothing yet — add drinks from the Menu Galaxy.</p></div>
+        </div>
+        <div class="loyalty">
+          <h4>Join the Epoch</h4>
+          <p style="color:var(--cream-dim); font-size:0.88rem;">Epoh Regulars get early access to seasonal drinks and a free cup every tenth visit.</p>
+          <form class="loyalty-form" id="loyalty-form">
+            <input type="email" placeholder="you@email.com" required />
+            <button type="submit">Join</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="logo">Epoh</div>
+  <p>© 2026 Epoh. A new epoch of chai and coffee.</p>
+</footer>
+
+<div class="modal-scrim" id="modal-scrim">
+  <div class="modal-panel">
+    <button class="modal-close" id="modal-close">×</button>
+    <div class="modal-visual" id="modal-visual"><div class="ring"></div><div class="glow" id="modal-glow"></div></div>
+    <div class="modal-body">
+      <h3 id="modal-name"></h3>
+      <p class="price" id="modal-price"></p>
+      <p class="desc" id="modal-desc"></p>
+      <div class="modal-ctas">
+        <button class="btn btn-primary" id="modal-add">Add to Pre-order</button>
+        <a class="btn btn-ghost" href="#visit">Try This at Epoh</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============ DATA ============ */
+const DRINKS = [
+  {id:1, name:"Kadak Masala Chai", cat:"tea", desc:"Strong CTC brew, house masala of cardamom, clove, cinnamon, ginger, fennel, black pepper. Epoh's heartbeat.", price:"₹60–120", badge:"Bestseller"},
+  {id:2, name:"Adrak Chai", cat:"tea", desc:"Extra fresh ginger, bold and warming — built for winter mornings and slow digestion.", price:"₹70–130", badge:"Signature"},
+  {id:3, name:"Cardamom Elaichi Chai", cat:"tea", desc:"Fragrance over fire. Pure cardamom-forward brew for the purists.", price:"₹70–130", badge:"Signature"},
+  {id:4, name:"Assam Bold Black Tea", cat:"tea", desc:"Clean, strong, no frills. The one you order before a meeting.", price:"₹50–90", badge:null},
+  {id:5, name:"Green Tea, Classic & Lemon", cat:"tea", desc:"Light and wellness-first. Plain, or brightened with lemon-honey.", price:"₹80–140", badge:null},
+  {id:6, name:"Tulsi Immunity Kadha", cat:"tea", desc:"Caffeine-free tulsi, ginger, black pepper, cinnamon. A hug for your immune system.", price:"₹90–150", badge:"Caffeine-Free"},
+  {id:7, name:"Turmeric Golden Milk", cat:"tea", desc:"Warm milk, turmeric, black pepper, cinnamon. Your cozy nightcap.", price:"₹140–200", badge:"Signature"},
+  {id:8, name:"Peppermint Digest Cooler", cat:"tea", desc:"Chilled peppermint and lemon. The reset button after a heavy meal.", price:"₹90–140", badge:"Iced"},
+  {id:9, name:"Hibiscus Berry Refresher", cat:"tea", desc:"Hibiscus and dried berries over ice. Tart, vivid, made for the camera.", price:"₹100–160", badge:"Iced"},
+  {id:10, name:"Espresso", cat:"coffee", desc:"Pure double shot. Intense, focused, no distractions.", price:"₹80–120", badge:null},
+  {id:11, name:"Americano", cat:"coffee", desc:"Espresso, hot water, all-day balance. Light in body, strong in intent.", price:"₹100–150", badge:null},
+  {id:12, name:"Cappuccino", cat:"coffee", desc:"Double espresso, steamed milk, thick foam. Epoh's bestseller for a reason.", price:"₹120–180", badge:"Bestseller"},
+  {id:13, name:"Café Latte", cat:"coffee", desc:"More milk, thinner foam, smoother finish. Everyday coffee, done right.", price:"₹130–200", badge:null},
+  {id:14, name:"Sea Salt Mocha", cat:"coffee", desc:"Espresso, chocolate, steamed milk, a signature pinch of sea salt. Dessert in a cup.", price:"₹150–220", badge:"Signature"},
+  {id:15, name:"Cold Brew, Classic", cat:"coffee", desc:"Slow-steeped for hours, naturally sweet. Built for the 4pm slump.", price:"₹150–230", badge:"Iced"},
+  {id:16, name:"Caramel Frappe", cat:"coffee", desc:"Blended, chilled, caramel-laced. Indulgence, frothed to order.", price:"₹180–260", badge:"Iced"},
+  {id:17, name:"Jaggery Cinnamon Cappuccino", cat:"coffee", desc:"Cappuccino sweetened with jaggery, dusted with cinnamon. Desi twist, healthier finish.", price:"₹160–220", badge:"Signature"},
+  {id:18, name:"Filter Coffee Latte", cat:"coffee", desc:"South Indian filter decoction meets steamed milk. Tradition, modernized.", price:"₹150–200", badge:"Signature"},
+];
+
+const STORY = [
+  {icon:"🥣", title:"The masala is ground by hand", text:"Cardamom, clove, cinnamon, ginger, fennel and black pepper — mortar and pestle, every morning, no shortcuts.", tint:"var(--clay)"},
+  {icon:"☕", title:"The portafilter locks in", text:"Nine coffees, one espresso base. We treat the shot with the same seriousness a chaiwala gives the boil.", tint:"var(--umber)"},
+  {icon:"🌿", title:"Tulsi, turmeric, hibiscus", text:"The wellness side of the menu isn't an afterthought — it's grown into the same brewing discipline as everything else.", tint:"var(--moss)"},
+  {icon:"🔥", title:"Kadak means strong, on purpose", text:"Our hero chai isn't diluted for a wider audience. If you want it milder, we'll happily make that too.", tint:"var(--rose)"},
+  {icon:"🏙️", title:"Built for how the city actually drinks", text:"Desk-side Americanos, post-lunch digestifs, evening haldi lattes — Epoh moves with your day, not against it.", tint:"var(--gold)"}
+];
+
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isMobile = window.innerWidth < 760;
+
+/* ============ NAV + SCROLL PROGRESS ============ */
+const nav = document.getElementById('nav');
+const navToggle = document.getElementById('nav-toggle');
+const navLinks = document.getElementById('nav-links');
+navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+const progressFill = document.getElementById('progress-fill');
+function updateProgress(){
+  const doc = document.documentElement;
+  const pct = (doc.scrollTop) / (doc.scrollHeight - doc.clientHeight) * 100;
+  progressFill.style.width = pct + '%';
+}
+
+/* ============ TRAY STATE ============ */
+let tray = [];
+function addToTray(id){
+  const drink = DRINKS.find(d => d.id === id);
+  if(!drink) return;
+  tray.push(drink);
+  renderTray();
+}
+function removeFromTray(index){ tray.splice(index,1); renderTray(); }
+function renderTray(){
+  document.getElementById('tray-count').textContent = tray.length;
+  const list = document.getElementById('tray-list');
+  if(tray.length === 0){
+    list.innerHTML = '<p class="tray-empty">Nothing yet — add drinks from the Menu Galaxy.</p>';
+    return;
+  }
+  list.innerHTML = tray.map((d,i) => `
+    <div class="tray-item"><span>${d.name}</span><button data-idx="${i}" class="tray-remove">Remove</button></div>`).join('');
+  list.querySelectorAll('.tray-remove').forEach(btn => btn.addEventListener('click', () => removeFromTray(parseInt(btn.dataset.idx))));
+}
+document.getElementById('tray-btn-nav').addEventListener('click', () => {
+  document.getElementById('order').scrollIntoView({behavior: reducedMotion ? 'auto' : 'smooth'});
+});
+
+/* ============ MODAL ============ */
+const modalScrim = document.getElementById('modal-scrim');
+const modalGlow = document.getElementById('modal-glow');
+let currentModalDrink = null;
+function openModal(drink){
+  currentModalDrink = drink;
+  document.getElementById('modal-name').textContent = drink.name;
+  document.getElementById('modal-price').textContent = drink.price;
+  document.getElementById('modal-desc').textContent = drink.desc;
+  const teaGlow = 'radial-gradient(circle, #8fb08a, #33452f 70%)';
+  const coffeeGlow = 'radial-gradient(circle, #e3a83f, #5c3c1e 70%)';
+  modalGlow.style.background = drink.cat === 'tea' ? teaGlow : coffeeGlow;
+  modalScrim.classList.add('open');
+}
+document.getElementById('modal-close').addEventListener('click', () => modalScrim.classList.remove('open'));
+modalScrim.addEventListener('click', (e) => { if(e.target === modalScrim) modalScrim.classList.remove('open'); });
+document.getElementById('modal-add').addEventListener('click', () => {
+  if(currentModalDrink){ addToTray(currentModalDrink.id); }
+  modalScrim.classList.remove('open');
+});
+
+/* ============ LIST VIEW ============ */
+function badgeColor(badge){
+  if(badge === 'Bestseller') return 'var(--gold)';
+  if(badge === 'Signature') return 'var(--clay)';
+  if(badge === 'Iced') return 'var(--moss)';
+  if(badge === 'Caffeine-Free') return 'var(--rose)';
+  return 'var(--cream-dim)';
+}
+function drinkCardHtml(d){
+  return `<button class="drink-card" data-id="${d.id}">
+    <span>
+      <span class="drink-name">${d.name}</span>
+      <span class="drink-desc">${d.desc}</span>
+      ${d.badge ? `<span class="badge-pill" style="color:${badgeColor(d.badge)}">${d.badge}</span>` : ''}
+    </span>
+    <span class="drink-price">${d.price}</span>
+  </button>`;
+}
+function renderList(){
+  document.getElementById('list-tea').innerHTML = DRINKS.filter(d => d.cat === 'tea').map(drinkCardHtml).join('');
+  document.getElementById('list-coffee').innerHTML = DRINKS.filter(d => d.cat === 'coffee').map(drinkCardHtml).join('');
+  document.querySelectorAll('.drink-card').forEach(card => {
+    card.addEventListener('click', () => openModal(DRINKS.find(d => d.id === parseInt(card.dataset.id))));
+  });
+}
+renderList();
+
+const viewGalaxyBtn = document.getElementById('view-galaxy');
+const viewListBtn = document.getElementById('view-list');
+const galaxyWrap = document.getElementById('galaxy-wrap');
+const menuList = document.getElementById('menu-list');
+viewGalaxyBtn.addEventListener('click', () => {
+  viewGalaxyBtn.classList.add('active'); viewListBtn.classList.remove('active');
+  galaxyWrap.style.display = ''; menuList.style.display = 'none';
+});
+viewListBtn.addEventListener('click', () => {
+  viewListBtn.classList.add('active'); viewGalaxyBtn.classList.remove('active');
+  galaxyWrap.style.display = 'none'; menuList.style.display = 'grid';
+});
+
+/* ============ STORY SECTION ============ */
+const storyContainer = document.getElementById('story-stations');
+storyContainer.innerHTML = STORY.map((s,i) => `
+  <div class="story-station" data-i="${i}">
+    <div class="story-icon" style="background:${s.tint}22;">${s.icon}<span class="story-num">${String(i+1).padStart(2,'0')}</span></div>
+    <div class="story-text"><h3>${s.title}</h3><p>${s.text}</p></div>
+  </div>`).join('');
+
+const storyObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('in-view'); });
+}, {threshold:0.25});
+document.querySelectorAll('.story-station').forEach(el => storyObserver.observe(el));
+
+const mapObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('in-view'); });
+}, {threshold:0.4});
+mapObserver.observe(document.getElementById('visit-map'));
+
+/* ============ FORMS ============ */
+document.getElementById('order-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  document.getElementById('confirm-msg').classList.add('show');
+});
+document.getElementById('loyalty-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  e.target.querySelector('button').textContent = 'Joined ✓';
+});
+
+/* ============ HERO THREE.JS SCENE ============ */
+(function initHero(){
+  const canvas = document.getElementById('hero-canvas');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x15100c, 6, 16);
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0.4, 9);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const key = new THREE.PointLight(0xe3a83f, 1.5, 30);
+  key.position.set(4, 5, 6);
+  scene.add(key);
+  const rim = new THREE.PointLight(0x71916d, 0.85, 30);
+  rim.position.set(-5, -2, 4);
+  scene.add(rim);
+  const fill = new THREE.PointLight(0xc1824c, 0.5, 30);
+  fill.position.set(0, -3, 5);
+  scene.add(fill);
+
+  const rig = new THREE.Group();
+  scene.add(rig);
+
+  const kulhadGeo = new THREE.CylinderGeometry(0.55, 0.4, 1.05, 24, 1, true);
+  const kulhadMat = new THREE.MeshStandardMaterial({color:0xc1824c, roughness:0.85, metalness:0.05, side:THREE.DoubleSide});
+  const kulhad = new THREE.Mesh(kulhadGeo, kulhadMat);
+  kulhad.position.set(-1.9, 0, 0);
+  const kulhadLiquid = new THREE.Mesh(new THREE.CircleGeometry(0.53, 24), new THREE.MeshStandardMaterial({color:0x8a5220, roughness:0.25}));
+  kulhadLiquid.rotation.x = -Math.PI/2;
+  kulhadLiquid.position.set(-1.9, 0.5, 0);
+  rig.add(kulhad, kulhadLiquid);
+
+  const cupGeo = new THREE.CylinderGeometry(0.5, 0.42, 0.85, 28, 1, true);
+  const cupMat = new THREE.MeshStandardMaterial({color:0xf6ecdb, roughness:0.3, metalness:0.1, side:THREE.DoubleSide});
+  const cup = new THREE.Mesh(cupGeo, cupMat);
+  cup.position.set(1.9, -0.05, 0);
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.06, 12, 24, Math.PI*1.4), new THREE.MeshStandardMaterial({color:0xf6ecdb, roughness:0.3}));
+  handle.position.set(2.42, -0.05, 0);
+  handle.rotation.z = Math.PI/2;
+  handle.rotation.y = Math.PI/2;
+  const coffeeLiquid = new THREE.Mesh(new THREE.CircleGeometry(0.48, 24), new THREE.MeshStandardMaterial({color:0x3a2416, roughness:0.2}));
+  coffeeLiquid.rotation.x = -Math.PI/2;
+  coffeeLiquid.position.set(1.9, 0.38, 0);
+  rig.add(cup, handle, coffeeLiquid);
+
+  const orbitGroup = new THREE.Group();
+  scene.add(orbitGroup);
+  const spiceCount = isMobile ? 6 : 12;
+  const spiceColors = [0x71916d, 0xe3a83f, 0x8a5220, 0xc96a58];
+  const orbitMeshes = [];
+  for(let i=0; i<spiceCount; i++){
+    const isBean = i % 3 === 0;
+    const geo = isBean ? new THREE.SphereGeometry(0.07, 8, 8) : new THREE.IcosahedronGeometry(0.08, 0);
+    const mat = new THREE.MeshStandardMaterial({color: isBean ? 0x4a2f21 : spiceColors[i % spiceColors.length], roughness:0.6});
+    const m = new THREE.Mesh(geo, mat);
+    const angle = (i / spiceCount) * Math.PI * 2;
+    const radius = 3.1 + Math.sin(i*1.7) * 0.5;
+    m.userData = {angle, radius, speed:0.08 + (i%3)*0.02, yBase: Math.sin(i*2.1)*0.6, tilt: (i%2===0?1:-1)*0.35};
+    orbitMeshes.push(m);
+    orbitGroup.add(m);
+  }
+
+  const steamCount = isMobile ? 14 : 26;
+  const steamGeo = new THREE.BufferGeometry();
+  const steamPos = new Float32Array(steamCount * 3);
+  const steamSpeed = [];
+  for(let i=0; i<steamCount; i++){
+    steamPos[i*3] = -1.9 + (Math.random()-0.5)*0.4;
+    steamPos[i*3+1] = 0.5 + Math.random()*0.3;
+    steamPos[i*3+2] = (Math.random()-0.5)*0.4;
+    steamSpeed.push(0.004 + Math.random()*0.006);
+  }
+  steamGeo.setAttribute('position', new THREE.BufferAttribute(steamPos, 3));
+  const steamMat = new THREE.PointsMaterial({color:0xf6ecdb, size:0.075, transparent:true, opacity:0.55, depthWrite:false});
+  const steam = new THREE.Points(steamGeo, steamMat);
+  scene.add(steam);
+
+  function resize(){
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+
+  let heroVisible = true;
+  const heroEl = document.querySelector('.hero');
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(!heroVisible) return;
+    const t = performance.now() * 0.001;
+
+    if(!reducedMotion){
+      rig.rotation.y = Math.sin(t*0.15) * 0.12;
+      kulhad.rotation.y += 0.0025;
+      kulhadLiquid.rotation.z += 0.0025;
+      cup.rotation.y -= 0.002;
+      coffeeLiquid.rotation.z -= 0.002;
+      orbitGroup.rotation.y += 0.0015;
+
+      orbitMeshes.forEach(m => {
+        const d = m.userData;
+        d.angle += d.speed * 0.01;
+        m.position.x = Math.cos(d.angle) * d.radius;
+        m.position.z = Math.sin(d.angle) * d.radius * 0.6;
+        m.position.y = d.yBase + Math.sin(t*0.6 + d.angle) * d.tilt;
+        m.rotation.x += 0.01;
+        m.rotation.y += 0.008;
+      });
+
+      const pos = steamGeo.attributes.position.array;
+      for(let i=0; i<steamCount; i++){
+        pos[i*3+1] += steamSpeed[i];
+        pos[i*3] += Math.sin(t*2 + i) * 0.0015;
+        if(pos[i*3+1] > 2.6){ pos[i*3+1] = 0.45; pos[i*3] = -1.9 + (Math.random()-0.5)*0.4; }
+      }
+      steamGeo.attributes.position.needsUpdate = true;
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  const heroContent = document.querySelector('.hero-content');
+  function onScroll(){
+    updateProgress();
+    const heroHeight = heroEl.offsetHeight - window.innerHeight;
+    const progress = Math.min(Math.max(window.scrollY / heroHeight, 0), 1);
+
+    if(!reducedMotion){
+      camera.position.z = 9 - progress * 4.4;
+      camera.position.y = 0.4 + progress * 0.3;
+    }
+    heroContent.style.opacity = Math.max(1 - progress * 2.2, 0);
+
+    heroVisible = progress < 0.999 && window.scrollY < heroEl.offsetHeight;
+    canvas.style.display = window.scrollY < heroEl.offsetHeight ? 'block' : 'none';
+    canvas.style.pointerEvents = 'none';
+
+    if(window.scrollY > 40){ nav.classList.add('scrolled'); } else { nav.classList.remove('scrolled'); }
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+
+/* ============ MENU GALAXY THREE.JS SCENE ============ */
+(function initGalaxy(){
+  const canvas = document.getElementById('galaxy-canvas');
+  const wrap = document.getElementById('galaxy-wrap');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x1d1611, 6, 15);
+  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
+  camera.position.set(0, 0.6, 9);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const l1 = new THREE.PointLight(0xe3a83f, 1.3, 30); l1.position.set(5,4,6); scene.add(l1);
+  const l2 = new THREE.PointLight(0x71916d, 1.1, 30); l2.position.set(-5,-3,5); scene.add(l2);
+
+  const galaxyGroup = new THREE.Group();
+  scene.add(galaxyGroup);
+
+  // soft glow sprite texture, reused for every orb halo
+  const glowCanvas = document.createElement('canvas');
+  glowCanvas.width = glowCanvas.height = 128;
+  const gctx = glowCanvas.getContext('2d');
+  const grad = gctx.createRadialGradient(64,64,0,64,64,64);
+  grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  gctx.fillStyle = grad;
+  gctx.fillRect(0,0,128,128);
+  const glowTex = new THREE.CanvasTexture(glowCanvas);
+
+  function fibonacciPoint(i, n, radius){
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    const y = 1 - (i / (n - 1)) * 2;
+    const r = Math.sqrt(1 - y*y);
+    const theta = golden * i;
+    return new THREE.Vector3(Math.cos(theta) * r * radius, y * radius * 0.7, Math.sin(theta) * r * radius);
+  }
+
+  const badgeColorHex = {Bestseller:0xe3a83f, Signature:0xc1824c, Iced:0x71916d, "Caffeine-Free":0xc96a58};
+  const orbMeshes = [];
+
+  function buildCluster(items, centerX, baseColor){
+    items.forEach((drink, i) => {
+      const p = fibonacciPoint(i, items.length, 1.7);
+      const isBest = drink.badge === 'Bestseller';
+      const color = drink.badge ? badgeColorHex[drink.badge] : baseColor;
+
+      const geo = new THREE.SphereGeometry(isBest ? 0.22 : 0.16, 20, 20);
+      const mat = new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:0.55, roughness:0.35});
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(centerX + p.x, p.y, p.z);
+      mesh.userData = {drink, baseScale: isBest ? 1 : 0.85, pulse: isBest};
+
+      const halo = new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex, color, transparent:true, opacity:0.35, depthWrite:false}));
+      halo.scale.set(isBest ? 1.1 : 0.8, isBest ? 1.1 : 0.8, 1);
+      mesh.add(halo);
+
+      galaxyGroup.add(mesh);
+      orbMeshes.push(mesh);
+    });
+  }
+  buildCluster(DRINKS.filter(d => d.cat === 'tea'), -2.6, 0x71916d);
+  buildCluster(DRINKS.filter(d => d.cat === 'coffee'), 2.6, 0xe3a83f);
+
+  function resizeGalaxy(){
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resizeGalaxy);
+  resizeGalaxy();
+
+  let dragging = false, lastX = 0, lastY = 0, moved = false;
+  canvas.addEventListener('pointerdown', (e) => { dragging = true; moved = false; lastX = e.clientX; lastY = e.clientY; canvas.classList.add('dragging'); });
+  window.addEventListener('pointerup', () => { dragging = false; canvas.classList.remove('dragging'); });
+  window.addEventListener('pointermove', (e) => {
+    if(!dragging) return;
+    moved = true;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    galaxyGroup.rotation.y += dx * 0.005;
+    galaxyGroup.rotation.x = Math.max(Math.min(galaxyGroup.rotation.x + dy * 0.005, 0.6), -0.6);
+    lastX = e.clientX; lastY = e.clientY;
+  });
+
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  const tooltip = document.getElementById('galaxy-tooltip');
+
+  function updateMouse(e){
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    return rect;
+  }
+
+  canvas.addEventListener('pointermove', (e) => {
+    if(dragging){ tooltip.classList.remove('show'); return; }
+    const rect = updateMouse(e);
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(orbMeshes);
+    if(hits.length){
+      const d = hits[0].object.userData.drink;
+      tooltip.className = 'galaxy-tooltip show' + (d.cat === 'tea' ? ' tea' : '');
+      tooltip.innerHTML = `<h4>${d.name}</h4><p>${d.desc}</p><p class="price">${d.price}</p>`;
+      tooltip.style.left = (e.clientX - rect.left) + 'px';
+      tooltip.style.top = (e.clientY - rect.top) + 'px';
+      canvas.style.cursor = 'pointer';
+    } else {
+      tooltip.classList.remove('show');
+      canvas.style.cursor = dragging ? 'grabbing' : 'grab';
+    }
+  });
+
+  canvas.addEventListener('pointerup', (e) => {
+    if(moved) return;
+    const rect = updateMouse(e);
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(orbMeshes);
+    if(hits.length){ openModal(hits[0].object.userData.drink); }
+  });
+
+  let galaxyVisible = false;
+  const galaxyObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => { galaxyVisible = e.isIntersecting; });
+  }, {threshold:0.1});
+  galaxyObserver.observe(wrap);
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(!galaxyVisible) return;
+    const t = performance.now() * 0.001;
+    if(!dragging && !reducedMotion){ galaxyGroup.rotation.y += 0.0009; }
+    orbMeshes.forEach(m => {
+      if(m.userData.pulse && !reducedMotion){
+        const s = m.userData.baseScale * (1 + Math.sin(t*2 + m.position.x) * 0.08);
+        m.scale.setScalar(s);
+      }
+    });
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>
