@@ -200,24 +200,50 @@
   @media (max-width:640px){ .story-station{grid-template-columns:56px 1fr; gap:18px;} .story-icon{width:56px; height:56px; font-size:1.3rem;} }
 
   /* ---------- VISIT ---------- */
-  .visit-section{background:linear-gradient(180deg, var(--charcoal) 0%, var(--charcoal-2) 100%); padding:130px 0;}
-  .visit-grid{display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:start;}
-  .visit-detail{margin-bottom:28px;}
-  .visit-detail h4{font-size:0.85rem; color:var(--gold); margin-bottom:7px;}
-  .visit-detail p{color:var(--cream-dim);}
-  .visit-map{position:relative; height:360px; border-radius:22px; overflow:hidden; background:radial-gradient(circle at 30% 25%, #3f3020, #14100c 75%); border:1px solid rgba(246,236,219,0.06);}
-  .map-line{position:absolute; inset:0;}
-  .map-path{stroke:var(--gold); stroke-width:2; fill:none; stroke-dasharray:340; stroke-dashoffset:340; transition:stroke-dashoffset 1.5s ease;}
-  .visit-map.in-view .map-path{stroke-dashoffset:0;}
-  .map-pin{position:absolute; left:68%; top:36%; font-size:2.1rem; animation:bob 2.6s ease-in-out infinite; filter:drop-shadow(0 8px 14px rgba(0,0,0,0.5));}
-  @media (prefers-reduced-motion: reduce){ .map-pin{animation:none;} }
-  @keyframes bob{0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);}}
-  .socials{display:flex; gap:14px; margin-top:30px;}
-  .social-icon{width:44px; height:44px; border-radius:50%; border:1px solid rgba(246,236,219,0.22); display:flex; align-items:center; justify-content:center; transition:border-color .3s ease, transform .25s ease; background-size:220% 220%; background-position:0% 0%;}
-  .social-icon svg{width:18px; height:18px; fill:var(--cream); transition:fill .3s;}
-  .social-icon:hover{background-image:linear-gradient(135deg,var(--clay),var(--gold)); background-position:100% 100%; border-color:transparent; transform:translateY(-3px);}
+  <div>
+  <div class="visit-detail">
+    <h4>Location</h4>
+    <p>Hyderabad, Telangana</p>
+  </div>
 
-  @media (max-width:760px){ .visit-grid{grid-template-columns:1fr; gap:44px;} }
+  <div class="visit-detail">
+    <h4>Hours</h4>
+    <p>6:00 AM – 11:00 AM</p>
+  </div>
+
+  <div class="visit-detail">
+    <h4>Contact</h4>
+    <p>kayanurag9@gmail.com</p>
+  </div>
+
+  <div class="visit-detail">
+    <h4>Find Epoh9</h4>
+    <p>
+      <a
+        href="https://www.google.com/maps/search/?api=1&query=Kharmanghat+Epoh9"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="color:var(--cream); text-decoration:underline;"
+      >
+        Search Kharmanghat, Epoh9 on Google Maps
+      </a>
+    </p>
+  </div>
+
+  <div class="socials">
+    <a class="social-icon" href="https://www.instagram.com/kepoh9" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+      <!-- existing Instagram SVG -->
+    </a>
+
+    <a class="social-icon" href="https://x.com/epoh9" target="_blank" rel="noopener noreferrer" aria-label="X">
+      <!-- existing X SVG -->
+    </a>
+
+    <a class="social-icon" href="https://www.google.com/maps/search/?api=1&query=Kharmanghat+Epoh9" target="_blank" rel="noopener noreferrer" aria-label="Google Maps">
+      <!-- existing Maps SVG -->
+    </a>
+  </div>
+</div>
 
   /* ---------- ORDER ---------- */
   .order-section{background:var(--charcoal-2); padding:130px 0 150px;}
